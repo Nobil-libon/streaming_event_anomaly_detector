@@ -1,13 +1,16 @@
 # consumer.py
+
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 import time
 import numpy as np
 from collections import deque
 
 from stream.producer import event_queue
+from ai.llm_check import explain_anomaly
 
 WINDOW_SIZE = 20
 Z_SCORE_THRESHOLD = 3.0
@@ -41,10 +44,12 @@ def consumer():
             sliding_window.append(orders)
 
             if len(sliding_window) < WINDOW_SIZE:
+
                 print(
                     f"Collecting baseline data... "
                     f"({len(sliding_window)}/{WINDOW_SIZE})"
                 )
+
                 continue
 
             z_score = calculate_z_score(
@@ -62,27 +67,29 @@ def consumer():
 
                 print("\n🚨 ANOMALY DETECTED 🚨")
 
-                print(
-                    f"Orders Per Minute : {orders}"
-                )
+                print(f"Orders Per Minute : {orders}")
+                print(f"Z-Score           : {z_score:.2f}")
+                print(f"Traffic Type      : {event['traffic_type']}")
+                print(f"Source            : {event['source']}")
+                print(f"Timestamp         : {event['timestamp']}")
 
-                print(
-                    f"Z-Score           : {z_score:.2f}"
-                )
+                print("\n🤖 Llama 3.1 Analysis:")
 
-                print(
-                    f"Traffic Type      : {event['traffic_type']}"
-                )
+                try:
 
-                print(
-                    f"Source            : {event['source']}"
-                )
+                    explanation = explain_anomaly(
+                        metric_name="orders_per_minute",
+                        value=orders,
+                        z_score=round(z_score, 2)
+                    )
 
-                print(
-                    f"Timestamp         : {event['timestamp']}"
-                )
+                    print(explanation)
 
-                print("-" * 50)
+                except Exception as e:
+
+                    print(f"LLM Error: {e}")
+
+                print("-" * 60)
 
         time.sleep(0.5)
 
