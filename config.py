@@ -1,0 +1,12 @@
+# config.py
+
+EVENT_INTERVAL = 1
+
+WINDOW_SIZE = 20
+Z_SCORE_THRESHOLD = 3.0
+
+OLLAMA_MODEL = "llama3.1"
+
+DISCORD_WEBHOOK_URL = ""
+
+SQLITE_DB = "storage/events.db"
