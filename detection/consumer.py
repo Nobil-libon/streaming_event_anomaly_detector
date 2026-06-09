@@ -12,8 +12,11 @@ from collections import deque
 from stream.producer import event_queue
 from ai.llm_check import explain_anomaly
 
-WINDOW_SIZE = 20
+WINDOW_SIZE = 30
 Z_SCORE_THRESHOLD = 3.0
+
+order_timestamps = []
+opm_history = deque(maxlen=WINDOW_SIZE)
 
 
 def calculate_z_score(value, window):
@@ -31,67 +34,79 @@ def consumer():
 
     print("📊 Consumer Started...")
 
-    sliding_window = deque(maxlen=WINDOW_SIZE)
-
     while True:
 
-        if not event_queue.empty():
+        while not event_queue.empty():
 
             event = event_queue.get()
 
-            orders = event["orders_per_minute"]
+            order_timestamps.append(event["timestamp"])
 
-            sliding_window.append(orders)
+        current_time = time.time()
 
-            if len(sliding_window) < WINDOW_SIZE:
+        # Demo Mode:
+        # 1 second = 1 simulated minute
 
-                print(
-                    f"Collecting baseline data... "
-                    f"({len(sliding_window)}/{WINDOW_SIZE})"
-                )
+        order_timestamps[:] = [
+            ts for ts in order_timestamps
+            if current_time - ts <= 60
+        ]
 
-                continue
+        orders_per_minute = len(order_timestamps)
 
-            z_score = calculate_z_score(
-                orders,
-                list(sliding_window)
+        opm_history.append(orders_per_minute)
+
+        if len(opm_history) < WINDOW_SIZE:
+
+            print(
+                f"Collecting baseline... "
+                f"({len(opm_history)}/{WINDOW_SIZE}) "
+                f"OPM={orders_per_minute}"
+            )
+
+            time.sleep(1)
+            continue
+
+        z_score = calculate_z_score(
+            orders_per_minute,
+            list(opm_history)
+        )
+
+        print(
+            f"OPM={orders_per_minute} | "
+            f"Z-Score={z_score:.2f}"
+        )
+
+        if abs(z_score) > Z_SCORE_THRESHOLD:
+
+            print("\n🚨 ANOMALY DETECTED 🚨")
+
+            print(
+                f"Orders Per Minute: {orders_per_minute}"
             )
 
             print(
-                f"Orders: {orders} | "
-                f"Mean: {np.mean(sliding_window):.2f} | "
                 f"Z-Score: {z_score:.2f}"
             )
 
-            if abs(z_score) > Z_SCORE_THRESHOLD:
+            try:
 
-                print("\n🚨 ANOMALY DETECTED 🚨")
+                explanation = explain_anomaly(
+                    "orders_per_minute",
+                    orders_per_minute,
+                    round(z_score, 2)
+                )
 
-                print(f"Orders Per Minute : {orders}")
-                print(f"Z-Score           : {z_score:.2f}")
-                print(f"Traffic Type      : {event['traffic_type']}")
-                print(f"Source            : {event['source']}")
-                print(f"Timestamp         : {event['timestamp']}")
+                print("\n🤖 Llama Analysis:")
+                print(explanation)
 
-                print("\n🤖 Llama 3.1 Analysis:")
+            except Exception as e:
 
-                try:
+                print(f"LLM Error: {e}")
 
-                    explanation = explain_anomaly(
-                        metric_name="orders_per_minute",
-                        value=orders,
-                        z_score=round(z_score, 2)
-                    )
+            print("-" * 60)
 
-                    print(explanation)
-
-                except Exception as e:
-
-                    print(f"LLM Error: {e}")
-
-                print("-" * 60)
-
-        time.sleep(0.5)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
