@@ -1,7 +1,7 @@
 # 🚨 Streaming Event Anomaly Detector with AI Agent Loop
 
 > AI Prototype Challenge 2026 — Infinite  
-> Real-time order event stream monitoring with Z-Score detection, Gemini AI analysis, and autonomous agent-driven alerting.
+> Real-time order event stream monitoring with Z-Score detection, Llama 3.1 AI analysis, and autonomous agent-driven alerting.
 
 ---
 
@@ -33,7 +33,7 @@ A real-time event streaming system that:
 
 1. **Generates** simulated order events via a producer
 2. **Consumes** and monitors events using Z-Score statistical detection
-3. **Analyzes** anomalies using Gemini API (Google AI)
+3. **Analyzes** anomalies using Llama 3.1 (local, via Ollama)
 4. **Decides** autonomously using an AI Agent Loop (severity classification + recommendation)
 5. **Alerts** via Discord webhook when anomalies cross thresholds
 6. **Visualizes** everything on a live React dashboard with FastAPI backend
@@ -52,7 +52,7 @@ Producer (stream/producer.py)
 Consumer + Z-Score Detection (detection/consumer.py)
         │
         ▼
-   Gemini API (ai/llm_check.py)
+   Llama 3.1 via Ollama (ai/llm_check.py)
         │
         ▼
      AI Agent Loop
@@ -76,7 +76,7 @@ Discord Alert    FastAPI APIs
 | Frontend | React.js |
 | Backend | FastAPI (Python) |
 | Database | SQLite |
-| AI Model | Gemini API (Google AI) |
+| AI Model | Llama 3.1 (Ollama — local) |
 | Detection | Z-Score Statistical Analysis |
 | Authentication | JWT (JSON Web Tokens) |
 | Authorization | RBAC (Role-Based Access Control) |
@@ -89,45 +89,42 @@ Discord Alert    FastAPI APIs
 ## 📁 Project Structure
 
 ```
-streaming_event_anomaly_detector/
+anomaly-detector/
 │
-├── project/
-│   ├── config.py               # Centralized configuration
-│   ├── main.py                 # FastAPI app entry point
-│   ├── requirements.txt        # Python dependencies
-│   ├── README.md
-│   ├── ai_usage_note.md        # AI tool usage disclosure
-│   ├── .env                    # Environment variables
-│   │
-│   ├── stream/
-│   │   └── producer.py         # Event generator (orders per minute)
-│   │
-│   ├── detection/
-│   │   └── consumer.py         # Z-Score anomaly consumer
-│   │
-│   ├── ai/
-│   │   └── llm_check.py        # Llama 3.1 analysis via Ollama
-│   │
-│   ├── alerts/
-│   │   └── discord_alert.py    # Discord webhook integration
-│   │
-│   ├── dashboard/
-│   │   └── dashboard.py        # React dashboard (FastAPI served)
-│   │
-│   ├── storage/
-│   │   └── events.db           # SQLite database
-│   │
-│   ├── logs/
-│   │   └── anomalies.log       # Anomaly log file
-│   │
-│   ├── sample_data/
-│   │   └── sample_events.json  # Sample event data for testing
-│   │
-│   └── test_cases/
-│       └── test_anomaly.py     # Pytest test suite
+├── config.py               # Centralized configuration
+├── main.py                 # FastAPI app entry point
+├── requirements.txt        # Python dependencies
+├── README.md
+├── ai_usage_note.md        # AI tool usage disclosure
+├── .env                    # Environment variables
+├── .gitignore
 │
-├── .git/
-└── .gitignore
+├── stream/
+│   └── producer.py         # Event generator (orders per minute)
+│
+├── detection/
+│   └── consumer.py         # Z-Score anomaly consumer
+│
+├── ai/
+│   └── llm_check.py        # Llama 3.1 analysis via Ollama
+│
+├── alerts/
+│   └── discord_alert.py    # Discord webhook integration
+│
+├── dashboard/
+│   └── dashboard.py        # React dashboard (FastAPI served)
+│
+├── storage/
+│   └── events.db           # SQLite database
+│
+├── logs/
+│   └── anomalies.log       # Anomaly log file
+│
+├── sample_data/
+│   └── sample_events.json  # Sample event data for testing
+│
+└── test_cases/
+    └── test_anomaly.py     # Pytest test suite
 ```
 
 ---
@@ -157,7 +154,7 @@ When a Z-Score anomaly is detected, the system triggers an autonomous agent work
 Anomaly Detected (Z-Score > threshold)
         │
         ▼
-  LLM Analysis (Ollama Llama 3.1)
+  LLM Analysis (Llama 3.1 via Ollama)
   "Explain possible causes of this OPM spike"
         │
         ▼
@@ -240,36 +237,34 @@ id | anomaly_id | severity | cause | recommendation | alert_sent | decided_at
 
 - Python 3.10+
 - Node.js 18+
-- Ollama with `llama3.1` model installed locally
+- [Ollama](https://ollama.com/) installed locally
 - Docker & Docker Compose (optional)
 
 ### 1. Clone the Repository
 
 ```bash
 git clone [YOUR_REPO_URL]
-cd streaming_event_anomaly_detector
+cd anomaly-detector
 ```
 
 ### 2. Set Up Python Environment
 
 ```bash
-# Set up venv in the root or inside project
 python -m venv venv
 source venv/bin/activate        # Linux/Mac
 venv\Scripts\activate           # Windows
 
-# Navigate into project/ directory to install dependencies
-cd project
 pip install -r requirements.txt
 ```
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file inside `project/`:
+Create a `.env` file:
 
 ```env
 SECRET_KEY=your_jwt_secret_key
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+OLLAMA_BASE_URL=http://localhost:11434
 Z_SCORE_THRESHOLD=2.5
 EVENT_INTERVAL=1
 DATABASE_URL=storage/events.db
@@ -278,7 +273,7 @@ DATABASE_URL=storage/events.db
 ### 4. Install React Dashboard Dependencies
 
 ```bash
-cd frontend
+cd dashboard
 npm install
 npm run build
 cd ..
@@ -290,31 +285,28 @@ cd ..
 
 ### Option A — Manual
 
-Run all commands from within the `project/` directory:
-
 ```bash
-cd project
-
 # Terminal 1: Start FastAPI backend
-python -m uvicorn api.server:app --host 127.0.0.1 --port 8000
+uvicorn main:app --reload --port 8000
 
-# Terminal 2: Start React frontend dev server
-cd frontend
-npm run dev
+# Terminal 2: Start event producer
+python stream/producer.py
+
+# Terminal 3: Start consumer/detector
+python detection/consumer.py
 ```
 
-Visit: `http://localhost:5173` (with proxy configured to backend port 8000)
+Visit: `http://localhost:8000`
 
 ### Option B — Docker Compose
 
 ```bash
-cd project
 docker compose up --build
 ```
 
 Visit: `http://localhost:8000`
 
-> ⚠️ Ensure your local Ollama server is running with `llama3.1` before starting.
+> ⚠️ Ensure Ollama is running locally on port `11434` before starting.
 
 ---
 
@@ -351,7 +343,7 @@ pytest test_cases/ -v
 
 - Events are simulated (not from a live production system)
 - SQLite is used for lightweight, single-node storage
-- Gemini API is used for AI analysis (requires valid API key)
+- Ollama runs locally; no cloud LLM API is used
 - Discord webhook URL is configured in `.env`
 - Z-Score threshold is configurable via environment variable
 
@@ -362,7 +354,7 @@ pytest test_cases/ -v
 - Single-node deployment only (no horizontal scaling)
 - No Kafka or message queue integration
 - Synthetic/simulated event data
-- Gemini API requires internet connectivity and valid API key
+- Ollama must be running on the same machine or local network
 - SQLite not suitable for high-concurrency production workloads
 
 ---
@@ -386,7 +378,7 @@ pytest test_cases/ -v
 | `[Rabin Kumar J]` | Producer, Consumer, Z-Score Engine |
 | `[Muhilan K]` | FastAPI Backend, SQLite, Authentication |
 | `[Shriraam K C]` | React Dashboard, API Integration |
-| `[Nobil S]` | AI Agent Loop, Gemini API Integration, Discord Alerts |
+| `[Nobil S]` | AI Agent Loop, Llama 3.1 / Ollama Integration, Discord Alerts |
 
 ---
 
@@ -396,4 +388,4 @@ This project was built for the **Infinite AI Prototype Challenge 2026** and is i
 
 ---
 
-*Built with ❤️ using FastAPI, React, and SQLite*
+*Built with ❤️ using FastAPI, React, Llama 3.1, and SQLite*
