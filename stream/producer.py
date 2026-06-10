@@ -31,8 +31,8 @@ def producer():
         # Normal traffic
         events_this_second = random.randint(1, 3)
 
-        # Simulated anomaly
-        if random.random() < 0.05:
+        # Simulated anomaly (15% chance per second for faster demo triggers)
+        if random.random() < 0.15:
             events_this_second = random.randint(15, 30)
 
         for _ in range(events_this_second):
