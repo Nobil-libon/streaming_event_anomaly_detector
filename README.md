@@ -221,7 +221,7 @@ id | anomaly_id | severity | cause | recommendation | alert_sent | decided_at
 
 | Method | Endpoint | Description | Auth |
 |--------|---------|-------------|------|
-| POST | `/login` | Authenticate and receive JWT | ❌ |
+| POST | `/login` | Authenticate and receive JWT | ✅ |
 | GET | `/events` | Fetch recent events | ✅ |
 | GET | `/metrics` | Live OPM metrics | ✅ |
 | GET | `/anomalies` | List detected anomalies | ✅ |
