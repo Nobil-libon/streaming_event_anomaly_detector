@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background-color: #0a0e1a;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0f1524; }
+::-webkit-scrollbar-thumb { background: #2d3a5e; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+/* ── Glow utilities ── */
+.glow-blue   { box-shadow: 0 0 24px rgba(59, 130, 246, 0.25); }
+.glow-rose   { box-shadow: 0 0 24px rgba(244, 63, 94,  0.30); }
+.glow-emerald{ box-shadow: 0 0 24px rgba(16, 185, 129, 0.25); }
+
+/* ── Glass card ── */
+.glass {
+  background: rgba(15, 21, 36, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(59, 130, 246, 0.12);
+}
+
+/* ── Animated gradient border on anomaly ── */
+@keyframes borderPulse {
+  0%, 100% { border-color: rgba(244, 63, 94, 0.5); }
+  50%       { border-color: rgba(244, 63, 94, 0.9); }
+}
+.border-anomaly { animation: borderPulse 1.5s ease-in-out infinite; }
+
+/* ── Scan-line overlay on anomaly cards ── */
+@keyframes scanline {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+/* ── Number flip transition ── */
+.stat-value {
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+/* ── Recharts tooltip ── */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #141c2e !important;
+  border: 1px solid #3b82f680 !important;
+  border-radius: 8px !important;
+}
+
+/* ── Table row hover ── */
+.event-row {
+  transition: background 0.15s ease;
+}
+.event-row:hover { background: rgba(59, 130, 246, 0.07); }

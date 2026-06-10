@@ -5,7 +5,11 @@ import random
 from datetime import datetime
 from queue import Queue
 
+from storage.db import initialize_database, save_event
+
 event_queue = Queue()
+
+initialize_database()
 
 
 def generate_event(order_id):
@@ -36,6 +40,7 @@ def producer():
             event = generate_event(order_id)
 
             event_queue.put(event)
+            save_event(event["order_id"], event["timestamp"], "producer")
 
             print(f"Generated: {event}")
 
